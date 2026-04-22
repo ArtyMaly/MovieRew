@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1 class="mb-4">Популярные фильмы</h1>
+
+<div class="row row-cols-1 row-cols-md-3 g-4">
+    {% for movie in movies %}
+    <div class="col">
+        <div class="card h-100 shadow-sm">
+            {% if movie.poster %}
+                <img src="{{ movie.poster.url }}" class="card-img-top" alt="{{ movie.title }}" style="height: 400px; object-fit: cover;">
+            {% endif %}
+            <div class="card-body">
+                <h5 class="card-title">{{ movie.title }}</h5>
+                <p class="card-text text-muted">{{ movie.description|truncatewords:20 }}</p>
+                <a href="{% url 'movie_detail' movie.pk %}" class="btn btn-outline-primary">Читать отзывы</a>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <p class="alert alert-info">Фильмов пока нет. Зайдите в админку и добавьте их!</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
