@@ -38,7 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'reviews',
-    'django.contrib.humanize'
+    'django.contrib.humanize',
+    'django_bootstrap5'
 ]
 
 MIDDLEWARE = [
@@ -122,3 +123,6 @@ import os
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+LOGIN_REDIRECT_URL = 'movie_list'  # Перенаправление на главную после входа
+LOGOUT_REDIRECT_URL = 'movie_list' # Перенаправление на главную после выхода

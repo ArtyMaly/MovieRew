@@ -4,6 +4,23 @@
 <h1 class="mb-4">Популярные фильмы</h1>
 
 <div class="row row-cols-1 row-cols-md-3 g-4">
+        {% if request.GET.q %}
+            <h2 class="mb-4">Результаты поиска по запросу "{{ request.GET.q }}"</h2>
+            <a href="{% url 'movie_list' %}" class="btn btn-link mb-3">Сбросить поиск</a>
+        {% else %}
+            <h1 class="mb-4">Популярные фильмы</h1>
+        {% endif %}
+
+        <div class="row row-cols-1 row-cols-md-3 g-4">
+            {% for movie in movies %}
+                {% empty %}
+                <div class="col-12">
+                    <div class="alert alert-warning">
+                        Ничего не нашли по вашему запросу. Попробуйте другое название!
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
     {% for movie in movies %}
     <div class="col">
         <div class="card h-100 shadow-sm">
@@ -12,6 +29,9 @@
             {% endif %}
             <div class="card-body">
                 <h5 class="card-title">{{ movie.title }}</h5>
+                <p class="text-warning">
+                    <strong>⭐ {{ movie.get_average_rating }}</strong> / 10
+                </p>
                 <p class="card-text text-muted">{{ movie.description|truncatewords:20 }}</p>
                 <a href="{% url 'movie_detail' movie.pk %}" class="btn btn-outline-primary">Читать отзывы</a>
             </div>

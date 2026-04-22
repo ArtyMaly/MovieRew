@@ -10,13 +10,25 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
             <a class="navbar-brand" href="/">MovieRate</a>
-            <div class="d-flex">
+            <div class="d-flex align-items-center">
                 {% if user.is_authenticated %}
-                    <span class="navbar-text me-3">Привет, {{ user.username }}</span>
-                    <a href="{% url 'logout' %}" class="btn btn-outline-light">Выйти</a>
+                    <form class="d-flex me-auto ms-3" action="{% url 'movie_list' %}" method="get">
+                        <input class="form-control form-control-sm me-2" type="search" name="q" placeholder="Поиск фильма..." aria-label="Search" value="{{ request.GET.q }}">
+                        <button class="btn btn-outline-light btn-sm" type="submit">Найти</button>
+                    </form>
+                    <span class="navbar-text me-3">
+                        Привет, <a href="{% url 'profile' %}" class="text-white text-decoration-none"><strong>{{ user.username }}</strong></a>
+                    </span>
+                    <form action="{% url 'logout' %}" method="post" style="display:inline;">
+                        {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-light btn-sm">Выйти</button>
+                    </form>
                 {% else %}
-                    <a href="{% url 'login' %}" class="btn btn-outline-light me-2">Вход</a>
-                    <a href="{% url 'register' %}" class="btn btn-primary">Регистрация</a>
+                    <a href="{% url 'login' %}" class="btn btn-outline-light me-2 btn-sm">Вход</a>
+                    <a href="{% url 'register' %}" class="btn btn-primary btn-sm">Регистрация</a>
+                {% endif %}
+                {% if user.is_staff %}
+                    <a href="{% url 'add_movie' %}" class="btn btn-success btn-sm me-2">+ Добавить фильм</a>
                 {% endif %}
             </div>
         </div>

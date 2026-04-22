@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% load django_bootstrap5 %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        {% if movie.poster %}
+            <img src="{{ movie.poster.url }}" class="img-fluid rounded shadow" alt="{{ movie.title }}">
+        {% endif %}
+        {% if user.is_authenticated %}
+            <a href="{% url 'toggle_favorite' movie.pk %}" class="btn {% if movie in user.favorites.all %}btn-danger{% else %}btn-outline-danger{% endif %}">
+        {% if movie in user.favorites.all %}❤️ В избранном{% else %}🤍 В избранное{% endif %}
+            </a>
+        {% endif %}
+    </div>
+    
+    <div class="col-md-8">
+        <h1>{{ movie.title }} <span class="badge bg-warning text-dark">⭐ {{ movie.get_average_rating }}</span></h1>
+        <p class="lead">{{ movie.description }}</p>
+        <hr>
+
+        <h3>Отзывы</h3>
+        {% for review in reviews %}
+            <div class="card mb-3 shadow-sm">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">
+                        <strong>{{ review.user.username }}</strong> — {{ review.created_at|date:"d.m.Y" }}
+                        <span class="badge bg-warning text-dark">{{ review.rating }}/10</span>
+                    </h6>
+                    <p class="card-text">{{ review.text }}</p>
+
+                    {% if review.user == user or user.is_staff %}
+                        <form action="{% url 'delete_review' review.pk %}" method="post" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-danger btn-sm" 
+                                onclick="return confirm('Вы уверены, что хотите удалить свой отзыв?')">
+                            Удалить
+                        </button>
+                    </form>
+                {% endif %}
+                </div>
+            </div>
+        {% empty %}
+            <p class="text-muted">Отзывов пока нет. Будьте первым!</p>
+        {% endfor %}
+
+        <hr>
+        {% if user.is_authenticated %}
+            <h4>Оставить отзыв</h4>
+            <form method="post" class="mt-3">
+                {% csrf_token %}
+                {% bootstrap_form form %}
+                <button type="submit" class="btn btn-primary">Отправить</button>
+            </form>
+        {% else %}
+            <div class="alert alert-info">
+                Чтобы оставить отзыв, пожалуйста, <a href="{% url 'login' %}">войдите</a>.
+            </div>
+        {% endif %}
+        {% for review in reviews %}
+            <div class="card mb-2">
+                <div class="card-body">
+                    <p>{{ review.text }} ({{ review.rating }}/10)</p>
+                    {% if user.is_staff %}
+                        <form action="{% url 'delete_review' review.pk %}" method="post" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Удалить этот отзыв?')">Удалить</button>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+    {% endfor %}
+    </div>
+</div>
+{% endblock %}
