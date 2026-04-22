@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <h1>Личный кабинет: {{ user.username }}</h1>
+    <hr>
+
+    <h3>🍿 Моё избранное</h3>
+    <div class="row row-cols-1 row-cols-md-4 g-4 mb-5">
+        {% for fav in favorites %}
+        <div class="col">
+            <div class="card h-100 shadow-sm">
+                <img src="{{ fav.movie.poster.url }}" class="card-img-top" alt="{{ fav.movie.title }}">
+                <div class="card-body text-center">
+                    <h6>{{ fav.movie.title }}</h6>
+                    <a href="{% url 'movie_detail' fav.movie.pk %}" class="btn btn-sm btn-primary">Перейти</a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+            <p class="text-muted">Вы пока ничего не добавили в избранное.</p>
+        {% endfor %}
+    </div>
+
+    <h3>✍️ Мои отзывы</h3>
+    <div class="list-group">
+        {% for review in user_reviews %}
+            <div class="list-group-item">
+                <h5>{{ review.movie.title }} <small class="text-muted">({{ review.rating }}/10)</small></h5>
+                <p>{{ review.text }}</p>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
