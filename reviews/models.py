@@ -23,6 +23,10 @@ class Review(models.Model):
     text = models.TextField()
     rating = models.IntegerField(choices=[(i, i) for i in range(1, 11)])
     created_at = models.DateTimeField(auto_now_add=True)
+    likes = models.ManyToManyField(User, related_name='liked_reviews', blank=True)
+
+    def total_likes(self):
+        return self.likes.count()
 
 class Favorite(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='favorites')
@@ -34,3 +38,4 @@ class Favorite(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.movie.title}"
+    
