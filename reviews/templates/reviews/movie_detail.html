@@ -44,6 +44,34 @@
             <p class="text-muted">Отзывов пока нет. Будьте первым!</p>
         {% endfor %}
 
+        {% for review in page_obj %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <p>{{ review.text }}</p>
+            
+                    <a href="{% url 'like_review' review.pk %}" class="btn btn-sm btn-outline-primary">
+                        👍 {{ review.total_likes }}
+                    </a>
+
+                    {% if review.user == user %}
+                        <a href="{% url 'edit_review' review.pk %}" class="btn btn-sm btn-outline-secondary">Изменить</a>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+
+        <nav>
+            <ul class="pagination">
+                {% if page_obj.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Назад</a></li>
+                {% endif %}
+                <li class="page-item disabled"><span class="page-link">Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}</span></li>
+                {% if page_obj.has_next %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Вперед</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+        
         <hr>
         {% if user.is_authenticated %}
             <h4>Оставить отзыв</h4>

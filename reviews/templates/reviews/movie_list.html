@@ -1,45 +1,84 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h1 class="mb-4">Популярные фильмы</h1>
+{% if not request.GET.q and carousel_movies %}
+<div id="topMoviesCarousel" class="carousel slide mb-5 shadow rounded" data-bs-ride="carousel">
+    <div class="carousel-indicators">
+        {% for movie in carousel_movies %}
+        <button type="button" data-bs-target="#topMoviesCarousel" data-bs-slide-to="{{ forloop.counter0 }}" 
+                {% if forloop.first %}class="active" aria-current="true"{% endif %}></button>
+        {% endfor %}
+    </div>
+    
+    <div class="carousel-inner rounded">
+        {% for movie in carousel_movies %}
+        <div class="carousel-item {% if forloop.first %}active{% endif %}" style="height: 450px;">
+            {% if movie.poster %}
+                <img src="{{ movie.poster.url }}" class="d-block w-100" alt="{{ movie.title }}" 
+                     style="object-fit: cover; height: 100%; opacity: 0.6; filter: brightness(0.5);">
+            {% else %}
+                <div class="w-100 h-100 bg-secondary d-flex align-items-center justify-content-center">Нет постера</div>
+            {% endif %}
+            
+            <div class="carousel-caption d-none d-md-block text-start pb-5">
+                <h1 class="display-4 fw-bold text-white">{{ movie.title }}</h1>
+                <p class="lead text-warning fs-3">⭐ {{ movie.get_average_rating }} / 10</p>
+                <p class="fs-5">{{ movie.description|truncatewords:25 }}</p>
+                <a href="{% url 'movie_detail' movie.pk %}" class="btn btn-primary btn-lg">Смотреть отзывы</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <button class="carousel-control-prev" type="button" data-bs-target="#topMoviesCarousel" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#topMoviesCarousel" data-bs-slide="next">
+        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+    </button>
+</div>
+{% endif %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    {% if request.GET.q %}
+        <div>
+            <h2>Результаты поиска по запросу "{{ request.GET.q }}"</h2>
+            <a href="{% url 'movie_list' %}" class="btn btn-link p-0">← Назад ко всем фильмам</a>
+        </div>
+    {% else %}
+        <h1>Популярные фильмы</h1>
+    {% endif %}
+</div>
 
 <div class="row row-cols-1 row-cols-md-3 g-4">
-        {% if request.GET.q %}
-            <h2 class="mb-4">Результаты поиска по запросу "{{ request.GET.q }}"</h2>
-            <a href="{% url 'movie_list' %}" class="btn btn-link mb-3">Сбросить поиск</a>
-        {% else %}
-            <h1 class="mb-4">Популярные фильмы</h1>
-        {% endif %}
-
-        <div class="row row-cols-1 row-cols-md-3 g-4">
-            {% for movie in movies %}
-                {% empty %}
-                <div class="col-12">
-                    <div class="alert alert-warning">
-                        Ничего не нашли по вашему запросу. Попробуйте другое название!
-                    </div>
-                </div>
-            {% endfor %}
-        </div>
     {% for movie in movies %}
     <div class="col">
-        <div class="card h-100 shadow-sm">
+        <div class="card h-100 shadow-sm border-0 transition-hover">
             {% if movie.poster %}
-                <img src="{{ movie.poster.url }}" class="card-img-top" alt="{{ movie.title }}" style="height: 400px; object-fit: cover;">
+                <img src="{{ movie.poster.url }}" class="card-img-top" alt="{{ movie.title }}" 
+                     style="height: 350px; object-fit: cover;">
             {% endif %}
             <div class="card-body">
-                <h5 class="card-title">{{ movie.title }}</h5>
-                <p class="text-warning">
-                    <strong>⭐ {{ movie.get_average_rating }}</strong> / 10
+                <h5 class="card-title fw-bold">{{ movie.title }}</h5>
+                <p class="text-warning mb-2">
+                    <strong>⭐ {{ movie.get_average_rating }}</strong> <span class="text-muted small">/ 10</span>
                 </p>
-                <p class="card-text text-muted">{{ movie.description|truncatewords:20 }}</p>
-                <a href="{% url 'movie_detail' movie.pk %}" class="btn btn-outline-primary">Читать отзывы</a>
+                <p class="card-text text-muted small">{{ movie.description|truncatewords:15 }}</p>
+            </div>
+            <div class="card-footer bg-transparent border-0 pb-3">
+                <a href="{% url 'movie_detail' movie.pk %}" class="btn btn-outline-primary w-100">Подробнее</a>
             </div>
         </div>
     </div>
     {% empty %}
     <div class="col-12">
-        <p class="alert alert-info">Фильмов пока нет. Зайдите в админку и добавьте их!</p>
+        <div class="alert alert-info py-4 text-center">
+            {% if request.GET.q %}
+                🔍 По запросу "{{ request.GET.q }}" ничего не найдено.
+            {% else %}
+                🎬 В библиотеке пока нет фильмов.
+            {% endif %}
+        </div>
     </div>
     {% endfor %}
 </div>
