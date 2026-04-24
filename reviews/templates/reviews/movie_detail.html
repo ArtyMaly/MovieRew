@@ -18,7 +18,13 @@
         <h1>{{ movie.title }} <span class="badge bg-warning text-dark">⭐ {{ movie.get_average_rating }}</span></h1>
         <p class="lead">{{ movie.description }}</p>
         <hr>
-
+    <div class="mb-3">
+        {% for genre in movie.genres.all %}
+            <span class="badge bg-info text-dark me-1">{{ genre.name }}</span>
+        {% empty %}
+            <span class="text-muted small">Жанры не указаны</span>
+        {% endfor %}
+    </div>
         <h3>Отзывы</h3>
         {% for review in reviews %}
             <div class="card mb-3 shadow-sm">
@@ -100,4 +106,23 @@
     {% endfor %}
     </div>
 </div>
+{% if similar_movies %}
+<hr class="my-5">
+<h3 class="mb-4">Похожие фильмы</h3>
+<div class="row row-cols-1 row-cols-md-4 g-4">
+    {% for sm in similar_movies %}
+    <div class="col">
+        <div class="card h-100 shadow-sm border-0">
+            {% if sm.poster %}
+                <img src="{{ sm.poster.url }}" class="card-img-top" style="height: 200px; object-fit: cover;">
+            {% endif %}
+            <div class="card-body p-2 text-center">
+                <h6 class="card-title mb-0"><a href="{% url 'movie_detail' sm.pk %}" class="text-decoration-none">{{ sm.title }}</a></h6>
+                <small class="text-warning">⭐ {{ sm.get_average_rating }}</small>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
 {% endblock %}

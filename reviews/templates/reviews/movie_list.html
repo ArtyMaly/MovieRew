@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block content %}
-{% if not request.GET.q and carousel_movies %}
+{% if not request.GET.q and not request.GET.genre and not request.GET.year and carousel_movies %}
 <div id="topMoviesCarousel" class="carousel slide mb-5 shadow rounded" data-bs-ride="carousel">
     <div class="carousel-indicators">
         {% for movie in carousel_movies %}
@@ -39,15 +39,67 @@
 </div>
 {% endif %}
 
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="d-flex justify-content-between align-items-center mb-3">
     {% if request.GET.q %}
         <div>
             <h2>Результаты поиска по запросу "{{ request.GET.q }}"</h2>
             <a href="{% url 'movie_list' %}" class="btn btn-link p-0">← Назад ко всем фильмам</a>
         </div>
+    {% elif request.GET.genre or request.GET.year %}
+        <h2>Фильмы по категориям</h2>
     {% else %}
         <h1>Популярные фильмы</h1>
     {% endif %}
+</div>
+
+<div class="card shadow-sm border-0 mb-4 bg-light">
+    <div class="card-body">
+        <form method="GET" action="{% url 'movie_list' %}" class="row g-3 align-items-center">
+            {% if request.GET.q %}<input type="hidden" name="q" value="{{ request.GET.q }}">{% endif %}
+            {% if request.GET.genre %}<input type="hidden" name="genre" value="{{ request.GET.genre }}">{% endif %}
+
+            <div class="col-md-4">
+                <div class="input-group input-group-sm">
+                    <label class="input-group-text" for="yearSelect">Год</label>
+                    <select name="year" class="form-select" id="yearSelect" onchange="this.form.submit()">
+                        <option value="">Все годы</option>
+                        {% for y in years %}
+                            <option value="{{ y }}" {% if request.GET.year == y|stringformat:"i" %}selected{% endif %}>{{ y }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="input-group input-group-sm">
+                    <label class="input-group-text" for="sortSelect">Сортировать</label>
+                    <select name="sort" class="form-select" id="sortSelect" onchange="this.form.submit()">
+                        <option value="">По умолчанию</option>
+                        <option value="rating" {% if request.GET.sort == 'rating' %}selected{% endif %}>Рейтингу (сначала высокие)</option>
+                        <option value="newest" {% if request.GET.sort == 'newest' %}selected{% endif %}>Дате (сначала новые)</option>
+                        <option value="oldest" {% if request.GET.sort == 'oldest' %}selected{% endif %}>Дате (сначала старые)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="col-md-4 text-md-end">
+                <a href="{% url 'movie_list' %}" class="btn btn-sm btn-outline-secondary">Сбросить все фильтры</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="mb-4 d-flex flex-wrap gap-2">
+    <a href="{% url 'movie_list' %}" 
+       class="btn btn-sm {% if not request.GET.genre %}btn-secondary{% else %}btn-outline-secondary{% endif %}">
+       Все жанры
+    </a>
+    {% for genre in genres %}
+        <a href="?genre={{ genre.id }}{% if request.GET.year %}&year={{ request.GET.year }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}" 
+           class="btn btn-sm {% if request.GET.genre == genre.id|stringformat:'s' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+           {{ genre.name }}
+        </a>
+    {% endfor %}
 </div>
 
 <div class="row row-cols-1 row-cols-md-3 g-4">
@@ -64,6 +116,12 @@
                     <strong>⭐ {{ movie.get_average_rating }}</strong> <span class="text-muted small">/ 10</span>
                 </p>
                 <p class="card-text text-muted small">{{ movie.description|truncatewords:15 }}</p>
+                
+                <div class="mt-2">
+                    {% for g in movie.genres.all %}
+                        <span class="badge bg-light text-dark border fw-normal">{{ g.name }}</span>
+                    {% endfor %}
+                </div>
             </div>
             <div class="card-footer bg-transparent border-0 pb-3">
                 <a href="{% url 'movie_detail' movie.pk %}" class="btn btn-outline-primary w-100">Подробнее</a>
@@ -75,6 +133,8 @@
         <div class="alert alert-info py-4 text-center">
             {% if request.GET.q %}
                 🔍 По запросу "{{ request.GET.q }}" ничего не найдено.
+            {% elif request.GET.genre or request.GET.year %}
+                📂 В этой категории или за этот год пока нет фильмов.
             {% else %}
                 🎬 В библиотеке пока нет фильмов.
             {% endif %}

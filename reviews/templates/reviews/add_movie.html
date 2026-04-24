@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">Добавить новый фильм</h2>
+    <form method="post" enctype="multipart/form-data" class="shadow p-4 rounded bg-white">
+        {% csrf_token %}
+        
+        {% if form.errors %}
+            <div class="alert alert-danger">{{ form.errors }}</div>
+        {% endif %}
+
+        <div class="mb-3">
+            {{ form.title.label_tag }}
+            {{ form.title }}
+        </div>
+
+        <div class="mb-3">
+            {{ form.description.label_tag }}
+            {{ form.description }}
+        </div>
+
+        <div class="mb-3">
+            {{ form.poster.label_tag }}
+            {{ form.poster }}
+        </div>
+
+        <div class="mb-3">
+            {{ form.release_date.label_tag }}
+            {{ form.release_date }}
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label d-block">Выберите жанры:</label>
+            <div class="card p-3" style="max-height: 200px; overflow-y: auto;">
+                {{ form.genres }}
+            </div>
+            <small class="text-muted">Если нужного жанра нет, добавьте его сначала через админку.</small>
+        </div>
+
+        <button type="submit" class="btn btn-success px-5">Сохранить</button>
+        <a href="{% url 'movie_list' %}" class="btn btn-outline-secondary ms-2">Отмена</a>
+    </form>
+</div>
+{% endblock %}

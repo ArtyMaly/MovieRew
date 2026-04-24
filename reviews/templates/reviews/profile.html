@@ -1,35 +1,102 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="container">
-    <h1>Личный кабинет: {{ user.username }}</h1>
-    <hr>
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-4 text-center border-end">
+            <div class="position-relative d-inline-block">
+                {% if user.profile.avatar %}
+                    <img src="{{ user.profile.avatar.url }}" class="rounded-circle img-thumbnail mb-3" 
+                         style="width: 180px; height: 180px; object-fit: cover;">
+                {% else %}
+                    <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white mb-3" 
+                         style="width: 180px; height: 180px; margin: 0 auto;">
+                        <span class="fs-1">{{ user.username|first|upper }}</span>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <h2 class="fw-bold">{{ user.username }}</h2>
+            <p class="text-muted">{{ user.email }}</p>
+            
+            <div class="d-grid gap-2 mt-4">
+                <a href="{% url 'change_password' %}" class="btn btn-outline-warning">
+                    🔐 Сменить пароль
+                </a>
+            </div>
+        </div>
 
-    <h3>🍿 Моё избранное</h3>
-    <div class="row row-cols-1 row-cols-md-4 g-4 mb-5">
-        {% for fav in favorites %}
-        <div class="col">
-            <div class="card h-100 shadow-sm">
-                <img src="{{ fav.movie.poster.url }}" class="card-img-top" alt="{{ fav.movie.title }}">
-                <div class="card-body text-center">
-                    <h6>{{ fav.movie.title }}</h6>
-                    <a href="{% url 'movie_detail' fav.movie.pk %}" class="btn btn-sm btn-primary">Перейти</a>
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4">
+                    <h4 class="card-title mb-4">⚙️ Настройки профиля</h4>
+                    <form method="POST" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Имя пользователя</label>
+                                {{ u_form.username }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Email</label>
+                                {{ u_form.email }}
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">Обновить аватарку</label>
+                            {{ p_form.avatar }}
+                        </div>
+
+                        <button type="submit" class="btn btn-primary px-4">Сохранить изменения</button>
+                    </form>
                 </div>
             </div>
         </div>
-        {% empty %}
-            <p class="text-muted">Вы пока ничего не добавили в избранное.</p>
-        {% endfor %}
     </div>
 
-    <h3>✍️ Мои отзывы</h3>
-    <div class="list-group">
-        {% for review in user_reviews %}
-            <div class="list-group-item">
-                <h5>{{ review.movie.title }} <small class="text-muted">({{ review.rating }}/10)</small></h5>
-                <p>{{ review.text }}</p>
+    <hr class="my-5">
+
+    <div class="row mt-4">
+        <div class="col-12">
+            <h3>🍿 Моё избранное</h3>
+            <div class="row row-cols-1 row-cols-md-4 g-4 mb-5 mt-2">
+                {% for fav in favorites %}
+                <div class="col">
+                    <div class="card h-100 shadow-sm border-0 transition-hover">
+                        {% if fav.movie.poster %}
+                            <img src="{{ fav.movie.poster.url }}" class="card-img-top" alt="{{ fav.movie.title }}" style="height: 250px; object-fit: cover;">
+                        {% endif %}
+                        <div class="card-body text-center p-2">
+                            <h6 class="mb-2">{{ fav.movie.title }}</h6>
+                            <a href="{% url 'movie_detail' fav.movie.pk %}" class="btn btn-sm btn-primary w-100">Перейти</a>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                    <div class="col-12">
+                        <p class="text-muted">Вы пока ничего не добавили в избранное.</p>
+                    </div>
+                {% endfor %}
             </div>
-        {% endfor %}
+
+            <h3 class="mt-5">✍️ Мои отзывы</h3>
+            <div class="list-group mt-3 shadow-sm">
+                {% for review in user_reviews %}
+                    <div class="list-group-item list-group-item-action p-3">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1 text-primary">{{ review.movie.title }}</h5>
+                            <span class="badge bg-warning text-dark">⭐ {{ review.rating }}/10</span>
+                        </div>
+                        <p class="mb-1 mt-2 text-dark">{{ review.text }}</p>
+                        <small class="text-muted">{{ review.created_at|date:"d.m.Y H:i" }}</small>
+                    </div>
+                {% empty %}
+                    <p class="text-muted ms-2">Вы еще не оставили ни одного отзыва.</p>
+                {% endfor %}
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}

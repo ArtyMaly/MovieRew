@@ -12,4 +12,5 @@ urlpatterns = [
     path('movie/<int:movie_pk>/favorite/', views.toggle_favorite, name='toggle_favorite'),
     path('review/<int:pk>/like/', views.like_review, name='like_review'),
     path('review/<int:pk>/edit/', views.edit_review, name='edit_review'),
+    path('profile/password/', views.change_password, name='change_password'),
 ]
