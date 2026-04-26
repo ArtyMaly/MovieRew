@@ -12,18 +12,14 @@ from django.contrib.auth import update_session_auth_hash
 from django.contrib import messages
 from .forms import UserUpdateForm, ProfileUpdateForm
 
-# --- ГЛАВНАЯ СТРАНИЦА (Поиск + Слайдер) ---
 def movie_list(request):
-    # 1. Сбор параметров из GET-запроса
     genre_id = request.GET.get('genre')
     query = request.GET.get('q')
     sort = request.GET.get('sort')
     year = request.GET.get('year')
 
-    # 2. Базовый запрос с расчетом среднего рейтинга
     movies_listing = Movie.objects.annotate(avg_rating=Avg('reviews__rating'))
 
-    # 3. ФИЛЬТРАЦИЯ (теперь фильтры могут суммироваться)
     if genre_id:
         movies_listing = movies_listing.filter(genres__id=genre_id)
     
@@ -35,40 +31,39 @@ def movie_list(request):
     if year:
         movies_listing = movies_listing.filter(release_date__year=year)
 
-    # 4. СОРТИРОВКА
     if sort == 'rating':
-        movies_listing = movies_listing.order_by('-avg_rating') # От высокого к низкому
+        movies_listing = movies_listing.order_by('-avg_rating') 
     elif sort == 'newest':
-        movies_listing = movies_listing.order_by('-release_date') # Сначала свежие
+        movies_listing = movies_listing.order_by('-release_date') 
     elif sort == 'oldest':
-        movies_listing = movies_listing.order_by('release_date') # Сначала ретро
+        movies_listing = movies_listing.order_by('release_date')
     else:
-        movies_listing = movies_listing.order_by('-id') # По умолчанию: последние добавленные
+        movies_listing = movies_listing.order_by('-id') 
 
-    # 5. ДАННЫЕ ДЛЯ СЛАЙДЕРА (Топ-5 по рейтингу)
     carousel_movies = Movie.objects.annotate(avg_rating=Avg('reviews__rating')).filter(
         avg_rating__isnull=False
     ).order_by('-avg_rating')[:5]
 
-    # 6. Список уникальных годов для выпадающего списка в шаблоне
     years = Movie.objects.dates('release_date', 'year', order='DESC')
 
     return render(request, 'reviews/movie_list.html', {
         'movies': movies_listing,
         'genres': Genre.objects.all(),
-        'years': [y.year for y in years], # Список годов: [2024, 2023, ...]
+        'years': [y.year for y in years], 
         'carousel_movies': carousel_movies
     })
 
-# --- СТРАНИЦА ФИЛЬМА (Сохранение отзыва + Пагинация) ---
 def movie_detail(request, pk):
     movie = get_object_or_404(Movie, pk=pk)
 
     reviews = movie.reviews.all().order_by('-user__profile__is_premium', '-created_at')
 
     similar_movies = Movie.objects.filter(genres__in=movie.genres.all()).exclude(pk=movie.pk).distinct()[:4]
+
+    is_favorite = False
+    if request.user.is_authenticated:
+        is_favorite = Favorite.objects.filter(user=request.user, movie=movie).exists()
     
-    # Обработка отправки отзыва
     if request.method == "POST":
         if not request.user.is_authenticated:
             return redirect('login')
@@ -83,9 +78,8 @@ def movie_detail(request, pk):
     else:
         form = ReviewForm()
 
-    # Пагинация отзывов
     all_reviews = movie.reviews.all().order_by('-created_at')
-    paginator = Paginator(all_reviews, 10) # 10 отзывов на страницу
+    paginator = Paginator(all_reviews, 10) 
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
@@ -93,10 +87,10 @@ def movie_detail(request, pk):
         'movie': movie,
         'similar_movies': similar_movies,
         'page_obj': page_obj, 
-        'form': form
+        'form': form,
+        'is_favorite': is_favorite,
     })
 
-# --- АККАУНТ И РЕГИСТРАЦИЯ ---
 def register(request):
     if request.method == "POST":
         form = UserCreationForm(request.POST)
@@ -121,7 +115,6 @@ def profile(request):
             return redirect('profile')
     else:
         u_form = UserUpdateForm(instance=request.user)
-        # Проверяем, есть ли профиль, если нет — создаем (для старых юзеров)
         p_form, created = Profile.objects.get_or_create(user=request.user)
         p_form = ProfileUpdateForm(instance=p_form)
 
@@ -136,7 +129,7 @@ def profile(request):
     })
     
 
-# --- ДЕЙСТВИЯ ПОЛЬЗОВАТЕЛЯ (Лайки, Избранное, Редактирование) ---
+
 @login_required
 def toggle_favorite(request, movie_pk):
     movie = get_object_or_404(Movie, pk=movie_pk)
@@ -175,14 +168,13 @@ def change_password(request):
         form = PasswordChangeForm(request.user, request.POST)
         if form.is_valid():
             user = form.save()
-            update_session_auth_hash(request, user)  # Чтобы сессия не слетела
+            update_session_auth_hash(request, user)  
             messages.success(request, 'Пароль успешно изменен!')
             return redirect('profile')
     else:
         form = PasswordChangeForm(request.user)
     return render(request, 'registration/change_password.html', {'form': form})
 
-# --- АДМИН-ФУНКЦИИ ---
 def is_moderator(user):
     return user.is_staff
 
@@ -200,7 +192,6 @@ def add_movie(request):
 @login_required
 def delete_review(request, pk):
     review = get_object_or_404(Review, pk=pk)
-    # Удалить может автор или модератор
     if review.user == request.user or request.user.is_staff:
         movie_pk = review.movie.pk
         review.delete()

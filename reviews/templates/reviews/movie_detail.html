@@ -8,8 +8,8 @@
             <img src="{{ movie.poster.url }}" class="img-fluid rounded shadow" alt="{{ movie.title }}">
         {% endif %}
         {% if user.is_authenticated %}
-            <a href="{% url 'toggle_favorite' movie.pk %}" class="btn {% if movie in user.favorites.all %}btn-danger{% else %}btn-outline-danger{% endif %}">
-        {% if movie in user.favorites.all %}❤️ В избранном{% else %}🤍 В избранное{% endif %}
+            <a href="{% url 'toggle_favorite' movie.pk %}" class="btn {% if is_favorite %}btn-danger{% else %}btn-outline-danger{% endif %} btn-sm mt-2">
+                {% if is_favorite %}❤️ В избранном{% else %}🤍 В избранное{% endif %}
             </a>
         {% endif %}
     </div>

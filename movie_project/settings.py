@@ -124,5 +124,5 @@ import os
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-LOGIN_REDIRECT_URL = 'movie_list'  # Перенаправление на главную после входа
-LOGOUT_REDIRECT_URL = 'movie_list' # Перенаправление на главную после выхода
+LOGIN_REDIRECT_URL = 'movie_list'  
+LOGOUT_REDIRECT_URL = 'movie_list'

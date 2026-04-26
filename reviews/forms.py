@@ -20,7 +20,6 @@ class MovieForm(forms.ModelForm):
             'title': forms.TextInput(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 5}),
             'release_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            # Используем чекбоксы для выбора нескольких жанров:
             'genres': forms.CheckboxSelectMultiple(),
         }
 
