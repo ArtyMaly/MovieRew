@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Movie, Review, Genre
+from .models import Movie, Review, Genre, Profile, Collection
 
 
 admin.site.register(Movie)
@@ -17,3 +17,13 @@ class MovieAdmin(admin.ModelAdmin):
 
 admin.site.unregister(Movie) 
 admin.site.register(Movie, MovieAdmin) 
+
+@admin.register(Profile)
+class ProfileAdmin(admin.ModelAdmin):
+    list_display = ('user', 'is_premium') 
+    list_filter = ('is_premium',)        
+    search_fields = ('user__username',)  
+
+@admin.register(Collection)
+class CollectionAdmin(admin.ModelAdmin):
+    filter_horizontal = ('movies',)

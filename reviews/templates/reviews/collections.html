@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">🎬 Тематические подборки</h2>
+    
+    {% for collection in collections %}
+        <div class="mb-5">
+            <div class="d-flex justify-content-between align-items-end mb-3">
+                <div>
+                    <h3 class="fw-bold mb-1">{{ collection.title }}</h3>
+                    <p class="text-muted mb-0">{{ collection.description }}</p>
+                </div>
+                <span class="badge bg-secondary">{{ collection.movies.count }} фильмов</span>
+            </div>
+
+            <div class="row row-cols-1 row-cols-md-5 g-3">
+                {% for movie in collection.movies.all|slice:":5" %} <div class="col">
+                        <div class="card h-100 shadow-sm border-0 transition-hover">
+                            {% if movie.poster %}
+                                <img src="{{ movie.poster.url }}" class="card-img-top" style="height: 220px; object-fit: cover;">
+                            {% endif %}
+                            <div class="card-body p-2 text-center">
+                                <h6 class="card-title mb-1" style="font-size: 0.9rem;">
+                                    <a href="{% url 'movie_detail' movie.pk %}" class="text-decoration-none text-dark stretched-link">
+                                        {{ movie.title }}
+                                    </a>
+                                </h6>
+                                <small class="text-warning">⭐ {{ movie.get_average_rating }}</small>
+                                <div class="text-muted" style="font-size: 0.75rem;">{{ movie.release_date|date:"Y" }}</div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        <hr class="text-muted opacity-25">
+    {% empty %}
+        <div class="alert alert-light text-center">Подборок пока нет. Создайте их в админке!</div>
+    {% endfor %}
+</div>
+{% endblock %}

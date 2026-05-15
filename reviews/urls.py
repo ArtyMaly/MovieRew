@@ -13,4 +13,6 @@ urlpatterns = [
     path('review/<int:pk>/like/', views.like_review, name='like_review'),
     path('review/<int:pk>/edit/', views.edit_review, name='edit_review'),
     path('profile/password/', views.change_password, name='change_password'),
+    path('profile/upgrade/', views.upgrade_to_premium, name='upgrade_to_premium'),
+    path('collections/', views.collection_list, name='collections'),
 ]

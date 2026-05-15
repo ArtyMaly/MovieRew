@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="text-center mb-5">
+        <h2 class="display-4">Выберите ваш план</h2>
+        <p class="text-muted">Получите эксклюзивные значки и приоритет в отзывах</p>
+    </div>
+
+    <div class="row justify-content-center g-4">
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm border-0">
+                <div class="card-body text-center">
+                    <h3 class="card-title">Free</h3>
+                    <h1 class="my-4">0 ₽</h1>
+                    <ul class="list-unstyled text-start mb-4">
+                        <li>✅ Просмотр всех фильмов</li>
+                        <li>✅ Обычные отзывы</li>
+                        <li class="text-muted">❌ Цветной ник</li>
+                        <li class="text-muted">❌ Приоритет в списке</li>
+                    </ul>
+                    <button class="btn btn-outline-secondary w-100 disabled">Текущий план</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card h-100 shadow border-warning" style="border-width: 2px;">
+                <div class="card-body text-center">
+                    <div class="badge bg-warning text-dark mb-2">ПОПУЛЯРНОЕ</div>
+                    <h3 class="card-title">Premium 👑</h3>
+                    <h1 class="my-4 text-warning">299 ₽ <small class="fs-6 text-muted">/ навсегда</small></h1>
+                    <ul class="list-unstyled text-start mb-4">
+                        <li>✅ Все функции Free</li>
+                        <li>✅ <strong>Золотой ник</strong> в отзывах</li>
+                        <li>✅ <strong>Ваши отзывы всегда первые</strong></li>
+                        <li>✅ Рамка вокруг аватарки</li>
+                    </ul>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-warning w-100 fw-bold">Получить Premium</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.exceptions import PermissionDenied
 from django.db.models import Avg, Q
 from django.core.paginator import Paginator
-from .models import Movie, Review, Favorite, Genre, Profile
+from .models import Movie, Review, Favorite, Genre, Profile, Collection
 from .forms import ReviewForm, MovieForm
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth import update_session_auth_hash
@@ -56,18 +56,18 @@ def movie_list(request):
 def movie_detail(request, pk):
     movie = get_object_or_404(Movie, pk=pk)
 
-    reviews = movie.reviews.all().order_by('-user__profile__is_premium', '-created_at')
-
-    similar_movies = Movie.objects.filter(genres__in=movie.genres.all()).exclude(pk=movie.pk).distinct()[:4]
-
-    is_favorite = False
+    user_review = None
     if request.user.is_authenticated:
-        is_favorite = Favorite.objects.filter(user=request.user, movie=movie).exists()
-    
+        user_review = movie.reviews.filter(user=request.user).first()
+
     if request.method == "POST":
         if not request.user.is_authenticated:
             return redirect('login')
             
+        if user_review:
+            messages.warning(request, "Вы уже оставили отзыв к этому фильму.")
+            return redirect('movie_detail', pk=movie.pk)
+
         form = ReviewForm(request.POST)
         if form.is_valid():
             review = form.save(commit=False)
@@ -78,10 +78,17 @@ def movie_detail(request, pk):
     else:
         form = ReviewForm()
 
-    all_reviews = movie.reviews.all().order_by('-created_at')
-    paginator = Paginator(all_reviews, 10) 
+    reviews_list = movie.reviews.all().order_by('-user__profile__is_premium', '-created_at')
+    
+    paginator = Paginator(reviews_list, 10) 
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
+
+    similar_movies = Movie.objects.filter(genres__in=movie.genres.all()).exclude(pk=movie.pk).distinct()[:4]
+
+    is_favorite = False
+    if request.user.is_authenticated:
+        is_favorite = Favorite.objects.filter(user=request.user, movie=movie).exists()
 
     return render(request, 'reviews/movie_detail.html', {
         'movie': movie,
@@ -89,6 +96,7 @@ def movie_detail(request, pk):
         'page_obj': page_obj, 
         'form': form,
         'is_favorite': is_favorite,
+        'user_review': user_review, # Теперь мы можем проверить это в HTML
     })
 
 def register(request):
@@ -128,8 +136,6 @@ def profile(request):
         'user_reviews': user_reviews
     })
     
-
-
 @login_required
 def toggle_favorite(request, movie_pk):
     movie = get_object_or_404(Movie, pk=movie_pk)
@@ -149,9 +155,7 @@ def like_review(request, pk):
 
 @login_required
 def edit_review(request, pk):
-    review = get_object_or_404(Review, pk=pk)
-    if review.user != request.user:
-        raise PermissionDenied
+    review = get_object_or_404(Review, pk=pk, user=request.user)
 
     if request.method == "POST":
         form = ReviewForm(request.POST, instance=review)
@@ -160,7 +164,11 @@ def edit_review(request, pk):
             return redirect('movie_detail', pk=review.movie.pk)
     else:
         form = ReviewForm(instance=review)
-    return render(request, 'reviews/edit_review.html', {'form': form, 'movie': review.movie})
+    
+    return render(request, 'reviews/edit_review.html', {
+        'form': form, 
+        'review': review
+    })
 
 @login_required
 def change_password(request):
@@ -170,7 +178,7 @@ def change_password(request):
             user = form.save()
             update_session_auth_hash(request, user)  
             messages.success(request, 'Пароль успешно изменен!')
-            return redirect('profile')
+            return redirect('movie_list')
     else:
         form = PasswordChangeForm(request.user)
     return render(request, 'registration/change_password.html', {'form': form})
@@ -198,3 +206,19 @@ def delete_review(request, pk):
         return redirect('movie_detail', pk=movie_pk)
     else:
         raise PermissionDenied
+    
+@login_required
+def upgrade_to_premium(request):
+    profile, created = Profile.objects.get_or_create(user=request.user)
+    
+    if request.method == "POST":
+        profile.is_premium = True
+        profile.save()
+        messages.success(request, "🎉 Поздравляем! Теперь у вас Premium подписка!")
+        return redirect('profile') 
+
+    return render(request, 'registration/upgrade.html') 
+
+def collection_list(request):
+    collections = Collection.objects.all().prefetch_related('movies')
+    return render(request, 'reviews/collections.html', {'collections': collections})
