@@ -126,3 +126,9 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 LOGIN_REDIRECT_URL = 'movie_list'  
 LOGOUT_REDIRECT_URL = 'movie_list'
+
+ALLOWED_HOSTS = ['*']
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://daizq-31-70-90-57.run.pinggy-free.link',
+]
