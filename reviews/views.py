@@ -3,7 +3,8 @@ from django.contrib.auth import login
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.exceptions import PermissionDenied
-from django.db.models import Avg, Q
+from django.db.models import Avg, Q, Count
+from django.contrib.auth.models import User
 from django.core.paginator import Paginator
 from .models import Movie, Review, Favorite, Genre, Profile, Collection
 from .forms import ReviewForm, MovieForm
@@ -46,11 +47,19 @@ def movie_list(request):
 
     years = Movie.objects.dates('release_date', 'year', order='DESC')
 
+    collections = Collection.objects.all().prefetch_related('movies')
+
+    top_commentators = User.objects.annotate(
+        reviews_count=Count('review')
+    ).filter(reviews_count__gt=0).order_by('-reviews_count')[:3]
+
     return render(request, 'reviews/movie_list.html', {
         'movies': movies_listing,
         'genres': Genre.objects.all(),
         'years': [y.year for y in years], 
-        'carousel_movies': carousel_movies
+        'carousel_movies': carousel_movies,
+        'collections': collections,
+        'top_commentators': top_commentators
     })
 
 def movie_detail(request, pk):
@@ -96,7 +105,7 @@ def movie_detail(request, pk):
         'page_obj': page_obj, 
         'form': form,
         'is_favorite': is_favorite,
-        'user_review': user_review, # Теперь мы можем проверить это в HTML
+        'user_review': user_review,
     })
 
 def register(request):

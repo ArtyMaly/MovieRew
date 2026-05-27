@@ -20,6 +20,8 @@ class Movie(models.Model):
 
     genres = models.ManyToManyField(Genre, related_name='movies', verbose_name="Жанры")
 
+    video_url = models.URLField(max_length=500, blank=True, null=True, verbose_name="Ссылка на плеер/видео")
+
     def __str__(self):
         return self.title
 
@@ -67,11 +69,12 @@ class Collection(models.Model):
     title = models.CharField(max_length=200, verbose_name="Название подборки")
     description = models.TextField(blank=True, verbose_name="Описание")
     movies = models.ManyToManyField('Movie', related_name='collections', verbose_name="Фильмы в подборке")
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return self.title
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
 
     class Meta:
         verbose_name = "Подборка"
         verbose_name_plural = "Подборки"
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return self.title

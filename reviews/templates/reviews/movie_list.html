@@ -1,8 +1,9 @@
 {% extends 'base.html' %}
 
 {% block content %}
+{# БЛОК 1: КАРУСЕЛЬ ТОП-ФИЛЬМОВ #}
 {% if not request.GET.q and not request.GET.genre and not request.GET.year and carousel_movies %}
-<div id="topMoviesCarousel" class="carousel slide mb-5 shadow rounded" data-bs-ride="carousel">
+<div id="topMoviesCarousel" class="carousel slide mb-5 shadow rounded" data-bs-ride="carousel" data-bs-interval="8000">
     <div class="carousel-indicators">
         {% for movie in carousel_movies %}
         <button type="button" data-bs-target="#topMoviesCarousel" data-bs-slide-to="{{ forloop.counter0 }}" 
@@ -17,14 +18,23 @@
                 <img src="{{ movie.poster.url }}" class="d-block w-100" alt="{{ movie.title }}" 
                      style="object-fit: cover; height: 100%; opacity: 0.6; filter: brightness(0.5);">
             {% else %}
-                <div class="w-100 h-100 bg-secondary d-flex align-items-center justify-content-center">Нет постера</div>
+                <div class="w-100 h-100 bg-secondary d-flex align-items-center justify-content-center text-white">Нет постера</div>
             {% endif %}
             
             <div class="carousel-caption d-none d-md-block text-start pb-5">
                 <h1 class="display-4 fw-bold text-white">{{ movie.title }}</h1>
                 <p class="lead text-warning fs-3">⭐ {{ movie.get_average_rating }} / 10</p>
                 <p class="fs-5">{{ movie.description|truncatewords:25 }}</p>
-                <a href="{% url 'movie_detail' movie.pk %}" class="btn btn-primary btn-lg">Смотреть отзывы</a>
+                
+                <div class="d-flex gap-3">
+                    <a href="{% url 'movie_detail' movie.pk %}" class="btn btn-primary btn-lg px-4">Отзывы</a>
+                    
+                    {% if movie.video_url %}
+                        <a href="{{ movie.video_url }}" target="_blank" class="btn btn-success btn-lg px-4 fw-bold">
+                            ▶️ Смотреть фильм
+                        </a>
+                    {% endif %}
+                </div>
             </div>
         </div>
         {% endfor %}
@@ -39,107 +49,272 @@
 </div>
 {% endif %}
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    {% if request.GET.q %}
-        <div>
-            <h2>Результаты поиска по запросу "{{ request.GET.q }}"</h2>
-            <a href="{% url 'movie_list' %}" class="btn btn-link p-0">← Назад ко всем фильмам</a>
+<div class="container my-5">
+    {# БЛОК 2: ТЕМАТИЧЕСКИЕ ПОДБОРКИ В ВИДЕ КАРУСЕЛИ #}
+    {% if not request.GET.q and not request.GET.genre and not request.GET.year %}
+        <div class="mb-4 d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="fw-bold text-dark mb-1">🔥 Тематические подборки</h2>
+                <p class="text-muted small mb-0">Эксклюзивные коллекции фильмов, собранные нашей редакцией</p>
+            </div>
         </div>
-    {% elif request.GET.genre or request.GET.year %}
-        <h2>Фильмы по категориям</h2>
-    {% else %}
-        <h1>Популярные фильмы</h1>
-    {% endif %}
-</div>
 
-<div class="card shadow-sm border-0 mb-4 bg-light">
-    <div class="card-body">
-        <form method="GET" action="{% url 'movie_list' %}" class="row g-3 align-items-center">
-            {% if request.GET.q %}<input type="hidden" name="q" value="{{ request.GET.q }}">{% endif %}
-            {% if request.GET.genre %}<input type="hidden" name="genre" value="{{ request.GET.genre }}">{% endif %}
+        {% if collections %}
+            <div id="collectionsCarousel" class="carousel slide shadow-sm rounded-4 mb-5" data-bs-ride="carousel" data-bs-interval="10000">
+                <div class="carousel-inner">
+                    {% for collection in collections %}
+                        <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                            <div class="card border-0 overflow-hidden" style="border-radius: 16px;">
+                                <div class="card-body p-4 bg-light">
+                                    <div class="row align-items-center px-md-5 position-relative">
+                                        
+                                        <div class="col-lg-3 border-end mb-3 mb-lg-0 py-2">
+                                            <span class="badge bg-primary mb-2">Подборка редакции</span>
+                                            <h3 class="fw-bold text-dark mb-2">{{ collection.title }}</h3>
+                                            <p class="text-secondary small mb-3">{{ collection.description|default:"Подборка интересных фильмов." }}</p>
+                                            <span class="badge bg-dark rounded-pill px-3 py-2">{{ collection.movies.count }} фильмов внутри</span>
+                                        </div>
+                                        
+                                        <div class="col-lg-9">
+                                            <div class="d-flex flex-nowrap overflow-auto gap-3 pb-2 px-1" style="scrollbar-width: thin; -webkit-overflow-scrolling: touch;">
+                                                {% for movie in collection.movies.all %}
+                                                    <div style="min-width: 150px; flex: 0 0 auto;">
+                                                        <div class="card h-100 border-0 shadow-sm position-relative bg-white" style="border-radius: 10px; overflow: hidden;">
+                                                            {% if movie.poster %}
+                                                                <img src="{{ movie.poster.url }}" class="card-img-top" style="height: 190px; object-fit: cover;" alt="{{ movie.title }}">
+                                                            {% else %}
+                                                                <div class="bg-secondary text-white d-flex align-items-center justify-content-center" style="height: 190px;">
+                                                                    <span class="small text-center px-1">Нет постера</span>
+                                                                </div>
+                                                            {% endif %}
+                                                            
+                                                            <div class="card-body p-2 text-center">
+                                                                <h6 class="card-title text-truncate mb-1" style="font-size: 0.85rem;">
+                                                                    <a href="{% url 'movie_detail' movie.pk %}" class="text-decoration-none text-dark stretched-link fw-bold">
+                                                                        {{ movie.title }}
+                                                                    </a>
+                                                                </h6>
+                                                                <small class="text-warning">⭐ {{ movie.get_average_rating|default:"0.0" }}</small>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
 
-            <div class="col-md-4">
-                <div class="input-group input-group-sm">
-                    <label class="input-group-text" for="yearSelect">Год</label>
-                    <select name="year" class="form-select" id="yearSelect" onchange="this.form.submit()">
-                        <option value="">Все годы</option>
-                        {% for y in years %}
-                            <option value="{{ y }}" {% if request.GET.year == y|stringformat:"i" %}selected{% endif %}>{{ y }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-            </div>
-
-            <div class="col-md-4">
-                <div class="input-group input-group-sm">
-                    <label class="input-group-text" for="sortSelect">Сортировать</label>
-                    <select name="sort" class="form-select" id="sortSelect" onchange="this.form.submit()">
-                        <option value="">По умолчанию</option>
-                        <option value="rating" {% if request.GET.sort == 'rating' %}selected{% endif %}>Рейтингу (сначала высокие)</option>
-                        <option value="newest" {% if request.GET.sort == 'newest' %}selected{% endif %}>Дате (сначала новые)</option>
-                        <option value="oldest" {% if request.GET.sort == 'oldest' %}selected{% endif %}>Дате (сначала старые)</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="col-md-4 text-md-end">
-                <a href="{% url 'movie_list' %}" class="btn btn-sm btn-outline-secondary">Сбросить все фильтры</a>
-            </div>
-        </form>
-    </div>
-</div>
-
-<div class="mb-4 d-flex flex-wrap gap-2">
-    <a href="{% url 'movie_list' %}" 
-       class="btn btn-sm {% if not request.GET.genre %}btn-secondary{% else %}btn-outline-secondary{% endif %}">
-       Все жанры
-    </a>
-    {% for genre in genres %}
-        <a href="?genre={{ genre.id }}{% if request.GET.year %}&year={{ request.GET.year }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}" 
-           class="btn btn-sm {% if request.GET.genre == genre.id|stringformat:'s' %}btn-primary{% else %}btn-outline-primary{% endif %}">
-           {{ genre.name }}
-        </a>
-    {% endfor %}
-</div>
-
-<div class="row row-cols-1 row-cols-md-3 g-4">
-    {% for movie in movies %}
-    <div class="col">
-        <div class="card h-100 shadow-sm border-0 transition-hover">
-            {% if movie.poster %}
-                <img src="{{ movie.poster.url }}" class="card-img-top" alt="{{ movie.title }}" 
-                     style="height: 350px; object-fit: cover;">
-            {% endif %}
-            <div class="card-body">
-                <h5 class="card-title fw-bold">{{ movie.title }}</h5>
-                <p class="text-warning mb-2">
-                    <strong>⭐ {{ movie.get_average_rating }}</strong> <span class="text-muted small">/ 10</span>
-                </p>
-                <p class="card-text text-muted small">{{ movie.description|truncatewords:15 }}</p>
-                
-                <div class="mt-2">
-                    {% for g in movie.genres.all %}
-                        <span class="badge bg-light text-dark border fw-normal">{{ g.name }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     {% endfor %}
                 </div>
+
+                <button class="carousel-control-prev" type="button" data-bs-target="#collectionsCarousel" data-bs-slide="prev" style="width: 5%;">
+                    <span class="carousel-control-prev-icon bg-dark rounded-circle p-3" aria-hidden="true"></span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#collectionsCarousel" data-bs-slide="next" style="width: 5%;">
+                    <span class="carousel-control-next-icon bg-dark rounded-circle p-3" aria-hidden="true"></span>
+                </button>
             </div>
-            <div class="card-footer bg-transparent border-0 pb-3">
-                <a href="{% url 'movie_detail' movie.pk %}" class="btn btn-outline-primary w-100">Подробнее</a>
+        {% endif %}
+    {% endif %}
+
+    {# БЛОК 3: ЗАГОЛОВОК СЕКЦИИ ФИЛЬМОВ #}
+    <div class="d-flex justify-content-between align-items-center mb-3 mt-5">
+        {% if request.GET.q %}
+            <div>
+                <h2>Результаты поиска по запросу "{{ request.GET.q }}"</h2>
+                <a href="{% url 'movie_list' %}" class="btn btn-link p-0">← Назад ко всем фильмам</a>
+            </div>
+        {% elif request.GET.genre or request.GET.year %}
+            <h2>Фильмы по категориям</h2>
+        {% else %}
+            <h1 class="fw-bold">Популярные фильмы</h1>
+        {% endif %}
+    </div>
+
+    {# БЛОК 4: ФИЛЬТРЫ #}
+    <div class="card shadow-sm border-0 mb-4 bg-light">
+        <div class="card-body">
+            <form method="GET" action="{% url 'movie_list' %}" class="row g-3 align-items-center">
+                {% if request.GET.q %}<input type="hidden" name="q" value="{{ request.GET.q }}">{% endif %}
+                {% if request.GET.genre %}<input type="hidden" name="genre" value="{{ request.GET.genre }}">{% endif %}
+
+                <div class="col-md-4">
+                    <div class="input-group input-group-sm">
+                        <label class="input-group-text" for="yearSelect">Год</label>
+                        <select name="year" class="form-select" id="yearSelect" onchange="this.form.submit()">
+                            <option value="">Все годы</option>
+                            {% for y in years %}
+                                <option value="{{ y }}" {% if request.GET.year == y|stringformat:"i" %}selected{% endif %}>{{ y }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="input-group input-group-sm">
+                        <label class="input-group-text" for="sortSelect">Сортировать</label>
+                        <select name="sort" class="form-select" id="sortSelect" onchange="this.form.submit()">
+                            <option value="">По умолчанию</option>
+                            <option value="rating" {% if request.GET.sort == 'rating' %}selected{% endif %}>Рейтингу (сначала высокие)</option>
+                            <option value="newest" {% if request.GET.sort == 'newest' %}selected{% endif %}>Дате (сначала новые)</option>
+                            <option value="oldest" {% if request.GET.sort == 'oldest' %}selected{% endif %}>Дате (сначала старые)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="col-md-4 text-md-end">
+                    <a href="{% url 'movie_list' %}" class="btn btn-sm btn-outline-secondary">Сбросить все фильтры</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {# БЛОК 5: СЕЛЕКТОР ЖАНРОВ #}
+    <div class="mb-4 d-flex flex-wrap gap-2">
+        <a href="{% url 'movie_list' %}" 
+           class="btn btn-sm {% if not request.GET.genre %}btn-secondary{% else %}btn-outline-secondary{% endif %}">
+            Все жанры
+        </a>
+        {% for genre in genres %}
+            <a href="?genre={{ genre.id }}{% if request.GET.year %}&year={{ request.GET.year }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}" 
+               class="btn btn-sm {% if request.GET.genre == genre.id|stringformat:'s' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                {{ genre.name }}
+            </a>
+        {% endfor %}
+    </div>
+
+    {# ДВУХКОЛОНОЧНАЯ СЕТКА: ФИЛЬМЫ + КОММЕНТАТОРЫ #}
+    <div class="row">
+        {# ЛЕВАЯ КОЛОНКА (9 из 12 блоков) — Каталог фильмов #}
+        <div class="col-lg-9">
+            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-2 row-cols-xl-3 g-4">
+                {% for movie in movies %}
+                <div class="col">
+                    <div class="card h-100 shadow-sm border-0 transition-hover d-flex flex-column" style="border-radius: 12px; overflow: hidden;">
+                        {% if movie.poster %}
+                            <img src="{{ movie.poster.url }}" class="card-img-top" alt="{{ movie.title }}" 
+                                 style="height: 300px; object-fit: cover; width: 100%;">
+                        {% else %}
+                            <div class="bg-secondary text-white d-flex align-items-center justify-content-center card-img-top" style="height: 300px;">
+                                <span class="small">Нет постера</span>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="card-body d-flex flex-column flex-grow-1 p-3">
+                            <h5 class="card-title fw-bold text-truncate mb-1" title="{{ movie.title }}" style="font-size: 1.1rem;">
+                                {{ movie.title }}
+                            </h5>
+                            <p class="text-warning mb-2 small">
+                                <strong>⭐ {{ movie.get_average_rating|default:"0.0" }}</strong> <span class="text-muted">/ 10</span>
+                            </p>
+                            <p class="card-text text-muted small flex-grow-1">{{ movie.description|truncatewords:12 }}</p>
+                            
+                            <div class="mt-2 flex-wrap d-flex gap-1">
+                                {% for g in movie.genres.all %}
+                                    <span class="badge bg-light text-dark border fw-normal" style="font-size: 0.75rem;">{{ g.name }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <div class="card-footer bg-transparent border-0 pt-0 pb-3 px-3">
+                            <div class="d-flex gap-2">
+                                <a href="{% url 'movie_detail' movie.pk %}" class="btn btn-outline-primary w-50 btn-sm py-2 fw-bold">
+                                    Подробнее
+                                </a>
+                                
+                                {% if movie.video_url %}
+                                    <a href="{{ movie.video_url }}" target="_blank" class="btn btn-success w-50 btn-sm py-2 fw-bold d-flex align-items-center justify-content-center gap-1">
+                                        ▶️ Смотреть
+                                    </a>
+                                {% else %}
+                                    <button class="btn btn-secondary w-50 btn-sm py-2 fw-bold" disabled title="Плеер еще не добавлен">
+                                        🔒 Скоро
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12">
+                    <div class="alert alert-info py-4 text-center">
+                        📂 Здесь пока пусто.
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        {# ПРАВАЯ КОЛОНКА (3 из 12 блоков) — Сайдбар с топ-комментаторами #}
+        <div class="col-lg-3 mt-4 mt-lg-0">
+            <div class="card border shadow-sm sticky-top" style="top: 20px; border-radius: 16px; border: 1px solid rgba(0,0,0,0.08) !important; background-color: #ffffff;">
+                <div class="card-header bg-white border-0 pt-4 pb-1">
+                    <h5 class="fw-bold mb-1" style="background: linear-gradient(45deg, #ff416c, #ff4b2b); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">✍️ Топ критиков</h5>
+                    <p class="text-muted small mb-0" style="font-size: 0.8rem;">Пользователи с наибольшим количеством рецензий</p>
+                </div>
+                <div class="card-body px-3 pb-4">
+                    {% if top_commentators %}
+                        <div class="list-group list-group-flush">
+                            {% for user in top_commentators %}
+                                <div class="list-group-item px-3 py-3 mb-2 d-flex align-items-center justify-content-between" 
+                                     style="border: 1px solid rgba(0, 123, 255, 0.1) !important; border-radius: 12px; background: #fdfdfd; transition: all 0.2s ease-in-out;">
+                                    
+                                    <div class="d-flex align-items-center">
+                                        
+                                        {% if user.profile.avatar %}
+                                            <img src="{{ user.profile.avatar.url }}" class="rounded-circle shadow-sm" 
+                                                 style="width: 42px; height: 42px; object-fit: cover; flex-shrink: 0; border: 2px solid #fff;">
+                                        {% else %}
+                                            {% if forloop.first %}
+                                                <div class="text-white rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm" 
+                                                     style="width: 42px; height: 42px; font-size: 1.1rem; flex-shrink: 0; background: linear-gradient(45deg, #ffe259, #ffa751);">
+                                                    {{ user.username|slice:":1"|upper }}
+                                                </div>
+                                            {% elif forloop.counter == 2 %}
+                                                <div class="text-white rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm" 
+                                                     style="width: 42px; height: 42px; font-size: 1.1rem; flex-shrink: 0; background: linear-gradient(45deg, #e1eec3, #f05053);">
+                                                    {{ user.username|slice:":1"|upper }}
+                                                </div>
+                                            {% else %}
+                                                <div class="text-white rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm" 
+                                                     style="width: 42px; height: 42px; font-size: 1.1rem; flex-shrink: 0; background: linear-gradient(45deg, #2193b0, #6dd5ed);">
+                                                    {{ user.username|slice:":1"|upper }}
+                                                </div>
+                                            {% endif %}
+                                        {% endif %}
+                                        
+                                        <div class="ms-3">
+                                            <h6 class="mb-0 fw-bold text-truncate" style="max-width: 110px; font-size: 0.95rem;" title="{{ user.username }}">
+                                                {% if forloop.first %}
+                                                    <span style="color: #ff7b00;">{{ user.username }}</span>
+                                                {% else %}
+                                                    <span style="color: #007bff;">{{ user.username }}</span>
+                                                {% endif %}
+                                                
+                                                {% if user.profile.is_premium %}
+                                                    <span class="text-warning small" title="Premium подписка">👑</span>
+                                                {% endif %}
+                                            </h6>
+                                            <small class="text-muted" style="font-size: 0.75rem;">
+                                                {% if forloop.first %}🏆 Главный кинокритик{% else %}Рецензент{% endif %}
+                                            </small>
+                                        </div>
+                                    </div>
+                                    
+                                    <span class="badge bg-primary text-white border-0 rounded-pill px-2 py-2 fw-bold" style="flex-shrink: 0; font-size: 0.75rem; min-width: 55px; box-shadow: 0 2px 4px rgba(0,123,255,0.2);">
+                                        {{ user.reviews_count }} отз.
+                                    </span>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted small text-center py-3 mb-0">Пока никто не оставил отзывов.</p>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>
-    {% empty %}
-    <div class="col-12">
-        <div class="alert alert-info py-4 text-center">
-            {% if request.GET.q %}
-                🔍 По запросу "{{ request.GET.q }}" ничего не найдено.
-            {% elif request.GET.genre or request.GET.year %}
-                📂 В этой категории или за этот год пока нет фильмов.
-            {% else %}
-                🎬 В библиотеке пока нет фильмов.
-            {% endif %}
-        </div>
-    </div>
-    {% endfor %}
 </div>
 {% endblock %}
